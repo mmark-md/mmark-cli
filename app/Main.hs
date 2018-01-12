@@ -49,7 +49,7 @@ main = do
     Left errs -> do
       if optJson
         then (BL.putStrLn . Aeson.encode . parseErrorsJson) errs
-        else putStrLn (MMark.parseErrorsPretty mdInput errs)
+        else putStr (MMark.parseErrorsPretty mdInput errs)
       exitFailure
     Right doc -> do
       let exts = mconcat
