@@ -6,7 +6,7 @@
 [![Stackage LTS](http://stackage.org/package/mmark-cli/badge/lts)](http://stackage.org/lts/package/mmark-cli)
 [![Build Status](https://travis-ci.org/mmark-md/mmark-cli.svg?branch=master)](https://travis-ci.org/mmark-md/mmark-cli)
 
-This is a command line application service as an interface to MMark markdown
+This is a command line application serving as an interface to MMark markdown
 processor.
 
 ## Contribution
