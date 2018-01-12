@@ -15,17 +15,19 @@ import Data.Version (showVersion)
 import Development.GitRev
 import Options.Applicative hiding (ParseError)
 import Paths_mmark_cli (version)
+import Skylighting (defaultFormatOpts)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
 import Text.Megaparsec (ParseError, SourcePos (..))
-import qualified Data.Aeson                 as Aeson
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Text.IO               as T
-import qualified Data.Text.Lazy             as TL
-import qualified Lucid                      as L
-import qualified Text.MMark                 as MMark
-import qualified Text.Megaparsec            as M
+import qualified Data.Aeson                  as Aeson
+import qualified Data.ByteString.Lazy.Char8  as BL
+import qualified Data.Text.IO                as T
+import qualified Data.Text.Lazy              as TL
+import qualified Lucid                       as L
+import qualified Text.MMark                  as MMark
+import qualified Text.MMark.Extension.Common as Ext
+import qualified Text.Megaparsec             as M
 
 -- | Entry point of the program.
 
@@ -45,7 +47,20 @@ main = do
         else putStrLn (MMark.parseErrorsPretty mdInput errs)
       exitFailure
     Right doc -> do
-      let htmlOutput = (TL.toStrict . L.renderText . MMark.render) doc
+      let exts = mconcat
+            [ f optExtFontAwesome           Ext.fontAwesome
+            , f optExtKbd                   Ext.kbd
+            , f optExtLinkTarget            Ext.linkTarget
+            , f optExtPunctuationPrettifier Ext.punctuationPrettifier
+            , f optExtSkylighting           Ext.skylighting defaultFormatOpts
+            ]
+          f p x = if p then x else mempty
+          htmlOutput
+            = TL.toStrict
+            . L.renderText
+            . MMark.render
+            . MMark.useExtension exts
+            $ doc
       if optJson
         then maybe BL.putStrLn BL.writeFile optOutputFile $
                Aeson.encode (htmlDocJson htmlOutput)
@@ -61,8 +76,25 @@ data Opts = Opts
     -- ^ File from which to read input (otherwise use stdin)
   , optOutputFile :: !(Maybe FilePath)
     -- ^ File to which to save output (otherwise use stdout)
-  , optJson :: !Bool
+  , optJson       :: !Bool
     -- ^ Whether to output JSON
+
+  , optExtComment :: !(Maybe Text)
+    -- ^ Enable extension: 'Ext.commentParagraph'
+  , optExtFontAwesome :: !Bool
+    -- ^ Enable extension: 'Ext.fontAwesome'
+  , optExtKbd     :: !Bool
+    -- ^ Enable extension: 'Ext.kbd'
+  , optExtLinkTarget :: !Bool
+    -- ^ Enable extension: 'Ext.linkTarget'
+  , optExtObfuscateEmail :: !(Maybe Text)
+    -- ^ Enable extension: 'Ext.obfuscateEmail'
+  , optExtPunctuationPrettifier :: !Bool
+    -- ^ Enable extension: 'Ext.punctuationPrettifier'
+  , optExtSkylighting :: !Bool
+    -- ^ Enable extension: 'Ext.skylighting'
+  , optExtToc :: !(Maybe (Int, Int))
+    -- ^ Enable extension: 'Ext.toc'
   }
 
 optsParserInfo :: ParserInfo Opts
@@ -108,6 +140,29 @@ optsParser = Opts
     , short   'j'
     , help    "Output results in JSON format"
     ]
+  <*> pure Nothing -- TODO optExtComment
+  <*> (switch . mconcat)
+    [ long    "ext-font-awesome"
+    , help    "Enable support for inserting font awesome icons"
+    ]
+  <*> (switch . mconcat)
+    [ long    "ext-kbd"
+    , help    "Enable support for wrapping things in kbd tags"
+    ]
+  <*> (switch . mconcat)
+    [ long    "ext-link-target"
+    , help    "Enable support for specifying link targets"
+    ]
+  <*> pure Nothing -- TODO optExtObfuscateEmail
+  <*> (switch . mconcat)
+    [ long    "ext-pp"
+    , help    "Enable punctuation prettifier"
+    ]
+  <*> (switch . mconcat)
+    [ long    "ext-skylighting"
+    , help    "Enable syntax highlighting of code snippets with Skylighting"
+    ]
+  <*> pure Nothing -- TODO optExtToc
 
 ----------------------------------------------------------------------------
 -- Helpers
