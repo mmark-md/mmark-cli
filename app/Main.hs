@@ -1,13 +1,15 @@
-{-# LANGUAGE CPP             #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TupleSections   #-}
+{-# LANGUAGE CPP               #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TupleSections     #-}
 
 module Main (main) where
 
 import Control.Applicative
+import Data.Aeson ((.=))
 import Data.List (intercalate)
-import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
 import Data.Version (showVersion)
 import Development.GitRev
@@ -16,13 +18,14 @@ import Paths_mmark_cli (version)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
-import Text.Megaparsec (ParseError)
-import qualified Data.Aeson                  as Aeson
-import qualified Data.ByteString.Lazy        as BL
-import qualified Data.Text.IO                as T
-import qualified Data.Text.Lazy              as TL
-import qualified Lucid                       as L
-import qualified Text.MMark                  as MMark
+import Text.Megaparsec (ParseError, SourcePos (..))
+import qualified Data.Aeson                 as Aeson
+import qualified Data.ByteString.Lazy.Char8 as BL
+import qualified Data.Text.IO               as T
+import qualified Data.Text.Lazy             as TL
+import qualified Lucid                      as L
+import qualified Text.MMark                 as MMark
+import qualified Text.Megaparsec            as M
 
 -- | Entry point of the program.
 
@@ -38,13 +41,13 @@ main = do
   case MMark.parse mdFileName mdInput of
     Left errs -> do
       if optJson
-        then (BL.putStr . Aeson.encode . parseErrorsJson) errs
+        then (BL.putStrLn . Aeson.encode . parseErrorsJson) errs
         else putStrLn (MMark.parseErrorsPretty mdInput errs)
       exitFailure
     Right doc -> do
       let htmlOutput = (TL.toStrict . L.renderText . MMark.render) doc
       if optJson
-        then maybe BL.putStr BL.writeFile optOutputFile $
+        then maybe BL.putStrLn BL.writeFile optOutputFile $
                Aeson.encode (htmlDocJson htmlOutput)
         else maybe T.putStr T.writeFile optOutputFile htmlOutput
 
@@ -109,8 +112,22 @@ optsParser = Opts
 ----------------------------------------------------------------------------
 -- Helpers
 
+-- | Represent the given collection of parse errors as 'Aeson.Value'.
+
 parseErrorsJson :: NonEmpty (ParseError Char MMarkErr) -> Aeson.Value
-parseErrorsJson = undefined -- TODO
+parseErrorsJson = Aeson.toJSON . fmap parseErrorObj
+  where
+    parseErrorObj :: ParseError Char MMarkErr -> Aeson.Value
+    parseErrorObj err = let (SourcePos {..}:|_) = M.errorPos err in Aeson.object
+      [ "file"   .= sourceName
+      , "line"   .= M.unPos sourceLine
+      , "column" .= M.unPos sourceColumn
+      , "text"   .= M.parseErrorTextPretty err
+      ]
+
+-- | Represent the given rendered HTML document as 'Aeson.Value'.
 
 htmlDocJson :: Text -> Aeson.Value
-htmlDocJson = undefined -- TODO
+htmlDocJson html = Aeson.object
+  [ "html" .= html
+  ]
