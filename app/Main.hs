@@ -7,11 +7,13 @@
 module Main (main) where
 
 import Control.Applicative
+import Control.Monad
 import Data.Aeson ((.=))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
 import Data.Version (showVersion)
+import Data.Void
 import Development.GitRev
 import Options.Applicative hiding (ParseError)
 import Paths_mmark_cli (version)
@@ -19,15 +21,18 @@ import Skylighting (defaultFormatOpts)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
-import Text.Megaparsec (ParseError, SourcePos (..))
+import Text.Megaparsec (Parsec, ParseError, SourcePos (..))
 import qualified Data.Aeson                  as Aeson
 import qualified Data.ByteString.Lazy.Char8  as BL
+import qualified Data.Text                   as T
 import qualified Data.Text.IO                as T
 import qualified Data.Text.Lazy              as TL
 import qualified Lucid                       as L
 import qualified Text.MMark                  as MMark
 import qualified Text.MMark.Extension.Common as Ext
 import qualified Text.Megaparsec             as M
+import qualified Text.Megaparsec.Char        as MC
+import qualified Text.Megaparsec.Char.Lexer  as MCL
 
 -- | Entry point of the program.
 
@@ -48,13 +53,19 @@ main = do
       exitFailure
     Right doc -> do
       let exts = mconcat
-            [ f optExtFontAwesome           Ext.fontAwesome
+            [ g optExtComment               Ext.commentParagraph
+            , f optExtFontAwesome           Ext.fontAwesome
             , f optExtKbd                   Ext.kbd
             , f optExtLinkTarget            Ext.linkTarget
+            , g optExtObfuscateEmail        Ext.obfuscateEmail
             , f optExtPunctuationPrettifier Ext.punctuationPrettifier
             , f optExtSkylighting           Ext.skylighting defaultFormatOpts
+            , g optExtToc $ \(from,to) ->
+               Ext.toc "toc" . MMark.runScanner doc . Ext.tocScanner $ \x ->
+                 from <= x && x <= to
             ]
           f p x = if p then x else mempty
+          g p x = maybe mempty x p
           htmlOutput
             = TL.toStrict
             . L.renderText
@@ -140,7 +151,11 @@ optsParser = Opts
     , short   'j'
     , help    "Output results in JSON format"
     ]
-  <*> pure Nothing -- TODO optExtComment
+  <*> (optional . fmap T.pack . strOption . mconcat)
+    [ long    "ext-comment"
+    , metavar "PREFIX"
+    , help    "Remove paragraphs that start with the given prefix"
+    ]
   <*> (switch . mconcat)
     [ long    "ext-font-awesome"
     , help    "Enable support for inserting font awesome icons"
@@ -153,16 +168,25 @@ optsParser = Opts
     [ long    "ext-link-target"
     , help    "Enable support for specifying link targets"
     ]
-  <*> pure Nothing -- TODO optExtObfuscateEmail
+  <*> (optional . fmap T.pack . strOption . mconcat)
+    [ long    "ext-obfuscate-email"
+    , metavar "CLASS"
+    , help    "Obfuscate email addresses assigning the specified class"
+    ]
   <*> (switch . mconcat)
-    [ long    "ext-pp"
+    [ long    "ext-punctuation"
     , help    "Enable punctuation prettifier"
     ]
   <*> (switch . mconcat)
     [ long    "ext-skylighting"
     , help    "Enable syntax highlighting of code snippets with Skylighting"
     ]
-  <*> pure Nothing -- TODO optExtToc
+  <*> (optional . option parseRange . mconcat)
+    [ long    "ext-toc"
+    , metavar "RANGE"
+    , help    ("Enable the extension to generate table of contents supplying "
+      ++       "the range of headers to include, e.g. \"1-6\" or \"2-4\"")
+    ]
 
 ----------------------------------------------------------------------------
 -- Helpers
@@ -186,3 +210,18 @@ htmlDocJson :: Text -> Aeson.Value
 htmlDocJson html = Aeson.object
   [ "html" .= html
   ]
+
+-- | Parse a range as two positive numbers separated by a hyphen.
+
+parseRange :: ReadM (Int, Int)
+parseRange = eitherReader $ \s ->
+  case M.parse p "" s of
+    Left err -> Left (M.parseErrorTextPretty err)
+    Right x  -> Right x
+  where
+    p :: Parsec Void String (Int, Int)
+    p = do
+      from <- MCL.decimal
+      void (MC.char '-')
+      to   <- MCL.decimal
+      return (from, to)
