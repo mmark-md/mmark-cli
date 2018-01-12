@@ -1,0 +1,32 @@
+language: c
+
+sudo: false
+
+cache:
+  directories:
+    - ~/.ghc
+    - ~/.cabal
+
+matrix:
+  include:
+    - env: CABALVER=1.24 GHCVER=8.0.2
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
+    - env: CABALVER=1.24 GHCVER=8.2.2
+      addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.2], sources: [hvr-ghc]}}
+
+before_install:
+  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+
+install:
+ - cabal --version
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+ - travis_retry cabal update
+ - cabal install --only-dependencies
+
+script:
+ - cabal configure -v2 -f dev
+ - cabal build
+ - cabal sdist
+
+notifications:
+  email: false
