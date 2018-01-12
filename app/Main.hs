@@ -138,18 +138,18 @@ optsParser = Opts
     [ long    "ifile"
     , short   'i'
     , metavar "IFILE"
-    , help    "Read markdown source from this file"
+    , help    "Read markdown source from this file (otherwise read from stdin)"
     ]
   <*> (optional . strOption . mconcat)
     [ long    "ofile"
     , short   'o'
     , metavar "OFILE"
-    , help    "Save rendered HTML document to this file"
+    , help    "Save rendered HTML document to this file (otherwise write to stdout)"
     ]
   <*> (switch . mconcat)
     [ long    "json"
     , short   'j'
-    , help    "Output results in JSON format"
+    , help    "Output parse errors and result in JSON format"
     ]
   <*> (optional . fmap T.pack . strOption . mconcat)
     [ long    "ext-comment"
@@ -184,8 +184,8 @@ optsParser = Opts
   <*> (optional . option parseRange . mconcat)
     [ long    "ext-toc"
     , metavar "RANGE"
-    , help    ("Enable the extension to generate table of contents supplying "
-      ++       "the range of headers to include, e.g. \"1-6\" or \"2-4\"")
+    , help    ("Enable generation of table of contents using the supplied "
+      ++       "range of headers to include, e.g. \"1-6\" or \"2-4\"")
     ]
 
 ----------------------------------------------------------------------------
