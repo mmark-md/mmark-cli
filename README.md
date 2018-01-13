@@ -6,6 +6,19 @@
 [![Stackage LTS](http://stackage.org/package/mmark-cli/badge/lts)](http://stackage.org/lts/package/mmark-cli)
 [![Build Status](https://travis-ci.org/mmark-md/mmark-cli.svg?branch=master)](https://travis-ci.org/mmark-md/mmark-cli)
 
+* [Templates](#tepmlates)
+* [Extensions](#extensions)
+  * [Comment paragraph](#comment-paragraph)
+  * [Font Awesome](#font-awesome)
+  * [Kbd tags](#kbd-tags)
+  * [Link targets](#link-targets)
+  * [Email obfuscation](#email-obfuscation)
+  * [Punctuation prettifier](#punctuation-prettifier)
+  * [Skylighting](#skylighting)
+  * [Table of contents](#table-of-contents)
+* [Contribution](#contribution)
+* [License](#license)
+
 This is a command line application serving as an interface to MMark markdown
 processor.
 
@@ -41,6 +54,252 @@ Available options:
                            supplied range of headers to include, e.g. "1-6" or
                            "2-4"
 ```
+
+## Templates
+
+By using the `--template` argument, it's possible to create a standalone
+HTML page. The templating system we use is
+[Mustache](https://mustache.github.io/mustache.5.html), as implemented by
+the [stache](https://hackage.haskell.org/package/stache) library. The
+library conforms to the version 1.1.3 of the official [Mustache
+specification](https://github.com/mustache/spec), but does not implement
+lambdas (which is an optional feature is the specification) for simplify and
+other technical reasons we won't touch here.
+
+If markdown source file has a YAML section, its contents will be provided as
+context for rendering of the template. In addition to that, a new top-level
+value bound to the variable named `output` will be available. That variable
+contains the HTML rendition of markdown document. It's best to interpolate
+it without HTML escaping, like so: `{{& output }}`.
+
+## Extensions
+
+Here we list how to use the available extensions. The extensions come from
+the [`mmark-ext`](https://hackage.haskell.org/package/mmark-ext) package.
+
+### Comment paragraph
+
+* Option: `--ext-comment PREFIX`
+
+This extension removes paragraphs that start with the given `PREFIX`. For
+example:
+
+```
+$ mmark --ext-comment REM
+First.
+
+REM Second.
+
+Third.
+----------------------- Control-D
+<p>First.</p>
+<p>Third.</p>
+```
+
+### Font awesome
+
+* Option: `--ext-font-awesome`
+
+This allows to turn autolinks with `fa` scheme into font awesome icons:
+
+```
+$ mmark --ext-font-awesome
+Here is the user icon: <fa:user>.
+
+A more interesting example: <fa:quote-left/3x/pull-left/border>.
+----------------------- Control-D
+<p>Here is the user icon: <span class="fa fa-user"></span>.</p>
+<p>A more interesting example:
+  <span class="fa fa-quote-left fa-3x fa-pull-left fa-border"></span>.
+</p>
+```
+
+In general, all path components in URIs that go after the name of icon will
+be prefixed with `"fa-"` and added as classes, so you can do a lot of fancy
+stuff, see <http://fontawesome.io/examples/>.
+
+### Kbd tags
+
+* Option: `--ext-kbd`
+
+Introduce kbd tags into resulting HTML document by wrapping content in links
+with URL with kbd scheme. For example:
+
+```
+$ mmark --ext-kbd
+To enable that mode press [Ctrl+A][kbd].
+
+[kbd]: kbd:
+----------------------- Control-D
+<p>To enable that mode press <kbd>Ctrl+A</kbd>.</p>
+```
+
+The use of reference-style links seems more aesthetically pleasant to the
+author, but you can of course do something like this instead:
+
+```
+To enable that mode press [Ctrl+A](kbd:).
+```
+
+### Link targets
+
+* Option: `--ext-link-target`
+
+When title of a link starts with the word `"_blank"`, `"_self"`,
+`"_parent"`, or `"_top"`, it's stripped from title (as well as all
+whitespace after it) and added as the value of target attribute of the
+resulting link. For example:
+
+```
+$ mmark --ext-kbd
+This [link](/url '_blank My title') opens in new tab.
+----------------------- Control-D
+<p>This <a href="/url" title="My title" target="_blank">link</a>
+opens in new tab.</p>
+```
+
+### Email obfuscation
+
+* Option: `--obfuscate-email CLASS`
+
+This extension makes email addresses in autolinks be rendered as something
+like this:
+
+```
+[mark@arch ~]$ mmark --ext-obfuscate-email protected-email
+Send all your spam to <someone@example.org>, if you can!
+----------------------- Control-D
+<p>Send all your spam to
+  <a href="javascript:void(0)"
+     class="protected-email"
+     data-email="someone@example.org">
+  Enable JavaScript to see this email</a>, if you can!
+</p>
+```
+
+You'll also need to include jQuery and this bit of JS code for the magic to
+work:
+
+```java-script
+$(document).ready(function () {
+    $(".protected-email").each(function () {
+        var item = $(this);
+        var email = item.data('email');
+        item.attr('href', 'mailto:' + email);
+        item.html(email);
+    });
+});
+```
+
+### Punctuation prettifier
+
+* Option: `--ext-punctuation`
+
+This makes MMark prettify punctuation (only affects plain text in inlines),
+the effect is the following:
+
+* Replace `...` with ellipsis `…`
+* Replace `---` with em-dash `—`
+* Replace `--` with en-dash `–`
+* Replace `"` with left double quote `“` when previous character was a space
+  character, otherwise replace it with right double quote `”`
+* Replace `'` with left single quote `‘` when previous character was a space
+  character, otherwise replace it with right single quote `’` aka apostrophe
+
+For example (not sure this is the correct punctuation to use here, but it
+demonstrates the effect):
+
+```
+[mark@arch ~]$ mmark --ext-punctuation
+Something---we don't know what, happened...
+----------------------- Control-D
+<p>Something—we don’t know what, happened…</p>
+```
+
+### Skylighting
+
+* Option: `--ext-skylighting`
+
+Use the [skylighting](https://hackage.haskell.org/package/skylighting)
+package to render code blocks with info strings that result in a successful
+lookup from syntax table that comes with the library.
+
+The resulting markup is wrapped with spans as described in the docs for
+[`formatHtmlInline`](https://hackage.haskell.org/package/skylighting/docs/Skylighting-Format-HTML.html#v:formatHtmlInline).
+
+Example:
+
+````
+[mark@arch ~]$ mmark --ext-skylighting
+Some Haskell:
+
+```haskell
+main :: IO ()
+main = return ()
+```
+----------------------- Control-D
+<p>Some Haskell:</p>
+<div class="sourceCode">
+  <pre class="sourceCode">
+    <code class="sourceCode">
+      <a class="sourceLine" id="1" data-line-number="1">
+        <span class="ot">main ::</span> <span class="dt">IO</span> ()
+      </a>
+      <a class="sourceLine" id="2" data-line-number="2">main <span class="fu">=</span> return ()</a>
+    </code>
+  </pre>
+</div>
+````
+
+### Table of contents
+
+* Option: `--ext-toc RANGE`
+
+Replace the code block with info string `"toc"` by table of contents
+assembled from headings with levels from `N` to `M`, where `N-M` is `RANGE`.
+
+For example:
+
+````
+[mark@arch ~]$ mmark --ext-toc 2-4
+# Story of my life
+
+```toc
+```
+
+## Charpter 1
+
+Foo.
+
+## Chapter 2
+
+Bar.
+
+### Something
+
+Baz.
+----------------------- Control-D
+<h1 id="story-of-my-life">Story of my life</h1>
+<ul>
+<li>
+<a href="#charpter-1">Charpter 1</a>
+</li>
+<li>
+<a href="#chapter-2">Chapter 2</a>
+<ul>
+<li>
+<a href="#something">Something</a>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="charpter-1">Charpter 1</h2>
+<p>Foo.</p>
+<h2 id="chapter-2">Chapter 2</h2>
+<p>Bar.</p>
+<h3 id="something">Something</h3>
+<p>Baz.</p>
+````
 
 ## Contribution
 
