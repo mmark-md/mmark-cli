@@ -125,7 +125,7 @@ optsParserInfo :: ParserInfo Opts
 optsParserInfo = info (helper <*> ver <*> optsParser) . mconcat $
   [ fullDesc
   , progDesc "Command line interface to MMark markdown processor"
-  , header   "mmark—command link interface to MMark markdown processor"
+  , header   "mmark—command line interface to MMark markdown processor"
   ]
   where
     ver :: Parser (a -> a)

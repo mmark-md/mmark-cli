@@ -10,7 +10,7 @@ This is a command line application serving as an interface to MMark markdown
 processor.
 
 ```
-mmark—command link interface to MMark markdown processor
+mmark—command line interface to MMark markdown processor
 
 Usage: mmark [-v|--version] [-i|--ifile IFILE] [-o|--ofile OFILE] [-j|--json]
              [-t|--template FILE] [--ext-comment PREFIX] [--ext-font-awesome]
