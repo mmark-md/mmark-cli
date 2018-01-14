@@ -116,14 +116,14 @@ A more interesting example: <fa:quote-left/3x/pull-left/border>.
 
 In general, all path components in URIs that go after the name of icon will
 be prefixed with `"fa-"` and added as classes, so you can do a lot of fancy
-stuff, see <http://fontawesome.io/examples/>.
+stuff, see http://fontawesome.io/examples/.
 
 ### Kbd tags
 
 * Option: `--ext-kbd`
 
 Introduce kbd tags into resulting HTML document by wrapping content in links
-with URL with kbd scheme. For example:
+with URL with `kbd` scheme. For example:
 
 ```
 $ mmark --ext-kbd
@@ -147,7 +147,7 @@ To enable that mode press [Ctrl+A](kbd:).
 
 When title of a link starts with the word `"_blank"`, `"_self"`,
 `"_parent"`, or `"_top"`, it's stripped from title (as well as all
-whitespace after it) and added as the value of target attribute of the
+whitespace after it) and added as the value of `target` attribute of the
 resulting link. For example:
 
 ```
@@ -206,7 +206,7 @@ the effect is the following:
 * Replace `'` with left single quote `‘` when previous character was a space
   character, otherwise replace it with right single quote `’` aka apostrophe
 
-For example (not sure this is the correct punctuation to use here, but it
+For example (not sure if this is the correct punctuation to use here, but it
 demonstrates the effect):
 
 ```
@@ -222,7 +222,7 @@ Something---we don't know what, happened...
 
 Use the [skylighting](https://hackage.haskell.org/package/skylighting)
 package to render code blocks with info strings that result in a successful
-lookup from syntax table that comes with the library.
+lookup from the syntax table that comes with the library.
 
 The resulting markup is wrapped with spans as described in the docs for
 [`formatHtmlInline`](https://hackage.haskell.org/package/skylighting/docs/Skylighting-Format-HTML.html#v:formatHtmlInline).
