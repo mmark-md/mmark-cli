@@ -57,8 +57,10 @@ main = do
       let exts = mconcat
             [ g optExtComment               Ext.commentParagraph
             , f optExtFontAwesome           Ext.fontAwesome
+            , f optExtFootnotes             Ext.footnotes
             , f optExtKbd                   Ext.kbd
             , f optExtLinkTarget            Ext.linkTarget
+            , f optExtMathJax               (Ext.mathJax (Just '$'))
             , g optExtObfuscateEmail        Ext.obfuscateEmail
             , f optExtPunctuationPrettifier Ext.punctuationPrettifier
             , f optExtSkylighting           Ext.skylighting defaultFormatOpts
@@ -107,10 +109,14 @@ data Opts = Opts
     -- ^ Enable extension: 'Ext.commentParagraph'
   , optExtFontAwesome :: !Bool
     -- ^ Enable extension: 'Ext.fontAwesome'
+  , optExtFootnotes :: !Bool
+    -- ^ Enable extension: 'Ext.footnotes'
   , optExtKbd :: !Bool
     -- ^ Enable extension: 'Ext.kbd'
   , optExtLinkTarget :: !Bool
     -- ^ Enable extension: 'Ext.linkTarget'
+  , optExtMathJax :: !Bool
+    -- ^ Enable extension: 'Ext.mathJax'
   , optExtObfuscateEmail :: !(Maybe Text)
     -- ^ Enable extension: 'Ext.obfuscateEmail'
   , optExtPunctuationPrettifier :: !Bool
@@ -180,12 +186,20 @@ optsParser = Opts
     , help    "Enable support for inserting font awesome icons"
     ]
   <*> (switch . mconcat)
+    [ long    "ext-footnotes"
+    , help    "Enable support for footnotes"
+    ]
+  <*> (switch . mconcat)
     [ long    "ext-kbd"
     , help    "Enable support for wrapping things in kbd tags"
     ]
   <*> (switch . mconcat)
     [ long    "ext-link-target"
     , help    "Enable support for specifying link targets"
+    ]
+  <*> (switch . mconcat)
+    [ long    "ext-mathjax"
+    , help    "Enable support for MathJax formulas"
     ]
   <*> (optional . fmap T.pack . strOption . mconcat)
     [ long    "ext-obfuscate-email"

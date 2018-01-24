@@ -10,8 +10,10 @@
 * [Extensions](#extensions)
   * [Comment paragraph](#comment-paragraph)
   * [Font Awesome](#font-awesome)
+  * [Footnotes](#footnotes)
   * [Kbd tags](#kbd-tags)
   * [Link targets](#link-targets)
+  * [MathJax](#mathjax)
   * [Email obfuscation](#email-obfuscation)
   * [Punctuation prettifier](#punctuation-prettifier)
   * [Skylighting](#skylighting)
@@ -118,6 +120,38 @@ In general, all path components in URIs that go after the name of icon will
 be prefixed with `"fa-"` and added as classes, so you can do a lot of fancy
 stuff, see http://fontawesome.io/examples/.
 
+### Footnotes
+
+* Option: `--ext-footnotes`
+
+The extension performs two transformations:
+
+* It turns links with URIs with `footnote` scheme and single path piece
+  consisting of a number into links to footnote references.
+* It turns block quotes with the `"footnotes"` label (see the example below)
+  into a footnote section.
+
+```
+$ mmark --ext-footnotes
+Here goes some text [1](footnote:1).
+
+> footnotes
+
+  1. Here we have the footnote.
+----------------------- Control-D
+<p>Here goes some text <a href="#fn1" id="fnref1"><sup>1</sup></a>.</p>
+<ol>
+<li id="fn1">
+Here we have the footnote.
+<a href="#fnref1">↩</a></li>
+</ol>
+```
+
+The extension is not fully safe though in the sense that we can't check that
+a footnote reference refers to an existing footnote and that footnotes have
+corresponding references, or that they are present in the document in the
+right order.
+
 ### Kbd tags
 
 * Option: `--ext-kbd`
@@ -157,6 +191,36 @@ This [link](/url '_blank My title') opens in new tab.
 <p>This <a href="/url" title="My title" target="_blank">link</a>
 opens in new tab.</p>
 ```
+
+### MathJax
+
+* Option: `--ext-mathjax`
+
+The extension allows to transform inline code spans into MathJax inline
+spans and code blocks with the info string `"mathjax"` (case-sensitive) into
+MathJax display spans. Every line in such a code block will produce a
+separate display span, i.e. a separate line with a formula (which is
+probably what you want anyway).
+
+Inline code spans must start and end with the dollar sign `$` to be
+recognized as MathJax markup:
+
+````
+$ mmark --ext-mathjax
+Let's talk about `$A$` and `$B$`.
+
+```mathjax
+A \xrightarrow{f} B
+```
+----------------------- Control-D
+<p>Let&#39;s talk about
+  <span class="math inline">\(A\)</span> and
+  <span class="math inline">\(B\)</span>.
+</p>
+<p>
+  <span class="math display">\[A \xrightarrow{f} B\]</span>
+</p>
+````
 
 ### Email obfuscation
 
