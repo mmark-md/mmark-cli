@@ -35,7 +35,7 @@ executable mmark
                     , lucid            >= 2.6   && < 3.0
                     , megaparsec       >= 6.4   && < 7.0
                     , mmark            >= 0.0.4 && < 0.1
-                    , mmark-ext        >= 0.1   && < 0.2
+                    , mmark-ext        >= 0.1.1 && < 0.2
                     , optparse-applicative >= 0.14 && < 0.15
                     , skylighting      >= 0.5   && < 0.6
                     , stache           >= 1.2   && < 1.3
