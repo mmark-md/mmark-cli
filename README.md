@@ -291,8 +291,8 @@ Use the [skylighting](https://hackage.haskell.org/package/skylighting)
 package to render code blocks with info strings that result in a successful
 lookup from the syntax table that comes with the library.
 
-The resulting markup is wrapped with spans as described in the docs for
-[`formatHtmlInline`](https://hackage.haskell.org/package/skylighting/docs/Skylighting-Format-HTML.html#v:formatHtmlInline).
+The resulting HTML will be rendered as described
+[here](https://hackage.haskell.org/package/mmark-ext-0.2.0.0/docs/Text-MMark-Extension-Skylighting.html#v:skylighting).
 
 Example:
 
