@@ -306,16 +306,10 @@ main = return ()
 ```
 ----------------------- Control-D
 <p>Some Haskell:</p>
-<div class="sourceCode">
-  <pre class="sourceCode">
-    <code class="sourceCode">
-      <a class="sourceLine" id="1" data-line-number="1">
-        <span class="ot">main ::</span> <span class="dt">IO</span> ()
-      </a>
-      <a class="sourceLine" id="2" data-line-number="2">main <span class="fu">=</span> return ()</a>
-    </code>
-  </pre>
-</div>
+<div class="source-code"><pre><code class="language-haskell">
+<span class="ot">main ::</span><span> </span><span class="dt">IO</span><span> ()</span>
+<span>main </span><span class="fu">=</span><span> return ()</span>
+</code></pre></div>
 ````
 
 ### Table of contents

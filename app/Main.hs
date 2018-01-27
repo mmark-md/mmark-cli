@@ -17,7 +17,6 @@ import Data.Void
 import Development.GitRev
 import Options.Applicative hiding (ParseError)
 import Paths_mmark_cli (version)
-import Skylighting (defaultFormatOpts)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
@@ -63,7 +62,7 @@ main = do
             , f optExtMathJax               (Ext.mathJax (Just '$'))
             , g optExtObfuscateEmail        Ext.obfuscateEmail
             , f optExtPunctuationPrettifier Ext.punctuationPrettifier
-            , f optExtSkylighting           Ext.skylighting defaultFormatOpts
+            , f optExtSkylighting           Ext.skylighting
             , g optExtToc $ \(from,to) ->
                Ext.toc "toc" . MMark.runScanner doc . Ext.tocScanner $ \x ->
                  from <= x && x <= to
