@@ -21,8 +21,8 @@
 * [Contribution](#contribution)
 * [License](#license)
 
-This is a command line application serving as an interface to MMark markdown
-processor.
+This is a command line application serving as an interface to the MMark
+markdown processor.
 
 ```
 mmark—command line interface to MMark markdown processor

@@ -9,9 +9,9 @@ maintainer:           Mark Karpov <markkarpov92@gmail.com>
 homepage:             https://github.com/mmark-md/mmark-cli
 bug-reports:          https://github.com/mmark-md/mmark-cli/issues
 category:             Text, CLI
-synopsis:             Command line interface to MMark markdown processor
+synopsis:             Command line interface to the MMark markdown processor
 build-type:           Simple
-description:          Command line interface to MMark markdown processor.
+description:          Command line interface to the MMark markdown processor.
 extra-doc-files:      CHANGELOG.md
                     , README.md
 
