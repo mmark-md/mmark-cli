@@ -1,9 +1,9 @@
-resolver: lts-10.3
+resolver: lts-10.8
 packages:
 - '.'
 extra-deps:
-- megaparsec-6.4.0
-- mmark-0.0.5.5
+- megaparsec-6.4.1
+- mmark-0.0.5.6
 - mmark-ext-0.2.0.0
-- modern-uri-0.2.0.0
+- modern-uri-0.2.1.0
 - parser-combinators-0.4.0
