@@ -6,7 +6,7 @@
 [![Stackage LTS](http://stackage.org/package/mmark-cli/badge/lts)](http://stackage.org/lts/package/mmark-cli)
 [![Build Status](https://travis-ci.org/mmark-md/mmark-cli.svg?branch=master)](https://travis-ci.org/mmark-md/mmark-cli)
 
-* [Templates](#tepmlates)
+* [Templates](#templates)
 * [Extensions](#extensions)
   * [Comment paragraph](#comment-paragraph)
   * [Font Awesome](#font-awesome)
