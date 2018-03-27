@@ -4,29 +4,32 @@ sudo: false
 
 cache:
   directories:
-    - ~/.ghc
-    - ~/.cabal
+    - ~/.cabal/packages
+    - ~/.cabal/store
 
 matrix:
   include:
-    - env: CABALVER=1.24 GHCVER=8.0.2
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2], sources: [hvr-ghc]}}
-    - env: CABALVER=1.24 GHCVER=8.2.2
-      addons: {apt: {packages: [cabal-install-1.24,ghc-8.2.2], sources: [hvr-ghc]}}
+    - env: CABALVER=2.2 GHCVER=8.0.2
+      addons: {apt: {packages: [cabal-install-2.2,ghc-8.0.2], sources: [hvr-ghc]}}
+    - env: CABALVER=2.2 GHCVER=8.2.2
+      addons: {apt: {packages: [cabal-install-2.2,ghc-8.2.2], sources: [hvr-ghc]}}
+    - env: CABALVER=2.2 GHCVER=8.4.1
+      addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.1], sources: [hvr-ghc]}}
+
+  allow_failures:
+    - env: CABALVER=2.2 GHCVER=8.4.1 # https://ghc.haskell.org/trac/ghc/ticket/14974
 
 before_install:
   - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 
 install:
- - cabal --version
- - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
- - travis_retry cabal update
- - cabal install --only-dependencies
+  - cabal --version
+  - ghc --version
+  - travis_retry cabal update
 
 script:
- - cabal configure -v2 -f dev
- - cabal build
- - cabal sdist
+  - cabal new-build --enable-tests --enable-benchmarks --flags=dev
+  - cabal sdist
 
 notifications:
   email: false
