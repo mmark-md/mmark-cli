@@ -1,3 +1,7 @@
+## MMark CLI 0.0.4.0
+
+* This version works with `mmark-0.0.6.0` and `megaparsec-7.0.0`.
+
 ## MMark CLI 0.0.3.0
 
 * This version works with `mmark-ext-0.2.0.0` and later.

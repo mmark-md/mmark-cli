@@ -10,7 +10,6 @@ import Control.Applicative
 import Control.Monad
 import Data.Aeson ((.=), Value (..))
 import Data.List (intercalate)
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Text (Text)
 import Data.Version (showVersion)
 import Data.Void
@@ -20,7 +19,7 @@ import Paths_mmark_cli (version)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
-import Text.Megaparsec (Parsec, ParseError, SourcePos (..))
+import Text.Megaparsec (Parsec, ParseErrorBundle (..), SourcePos (..))
 import qualified Data.Aeson                  as Aeson
 import qualified Data.ByteString.Lazy.Char8  as BL
 import qualified Data.HashMap.Strict         as HM
@@ -47,10 +46,10 @@ main = do
         absFile <- makeAbsolute file
         (absFile,) <$> T.readFile absFile
   case MMark.parse mdFileName mdInput of
-    Left errs -> do
+    Left bundle -> do
       if optJson
-        then (BL.putStrLn . Aeson.encode . parseErrorsJson) errs
-        else putStr (MMark.parseErrorsPretty mdInput errs)
+        then (BL.putStrLn . Aeson.encode . parseErrorsJson) bundle
+        else putStr (M.errorBundlePretty bundle)
       exitFailure
     Right doc -> do
       let exts = mconcat
@@ -223,13 +222,17 @@ optsParser = Opts
 ----------------------------------------------------------------------------
 -- Helpers
 
--- | Represent the given collection of parse errors as 'Value'.
+-- | Represent the given collection of parse errors as a 'Value'.
 
-parseErrorsJson :: NonEmpty (ParseError Char MMarkErr) -> Value
-parseErrorsJson = Aeson.toJSON . fmap parseErrorObj
+parseErrorsJson :: ParseErrorBundle Text MMarkErr -> Value
+parseErrorsJson ParseErrorBundle {..}
+  = Aeson.toJSON
+  . fmap parseErrorObj
+  . fst
+  $ M.attachSourcePos M.errorOffset bundleErrors bundlePosState
   where
-    parseErrorObj :: ParseError Char MMarkErr -> Value
-    parseErrorObj err = let (SourcePos {..}:|_) = M.errorPos err in Aeson.object
+    parseErrorObj :: (M.ParseError Text MMarkErr, SourcePos) -> Value
+    parseErrorObj (err, SourcePos {..}) = Aeson.object
       [ "file"   .= sourceName
       , "line"   .= M.unPos sourceLine
       , "column" .= M.unPos sourceColumn
@@ -248,8 +251,8 @@ htmlDocJson html = Aeson.object
 parseRange :: ReadM (Int, Int)
 parseRange = eitherReader $ \s ->
   case M.parse p "" s of
-    Left err -> Left (M.parseErrorTextPretty err)
-    Right x  -> Right x
+    Left bundle -> Left (M.errorBundlePretty bundle)
+    Right x -> Right x
   where
     p :: Parsec Void String (Int, Int)
     p = do
