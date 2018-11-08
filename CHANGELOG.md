@@ -1,3 +1,8 @@
+## MMark CLI 0.0.5.0
+
+* Added support for the `ghcSyntaxHighlighter` extension. Only available
+  when compiled with GHC >= 8.4.1.
+
 ## MMark CLI 0.0.4.0
 
 * This version works with `mmark-0.0.6.0` and `megaparsec-7.0.0`.
