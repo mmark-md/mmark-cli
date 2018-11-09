@@ -16,6 +16,7 @@
   * [MathJax](#mathjax)
   * [Email obfuscation](#email-obfuscation)
   * [Punctuation prettifier](#punctuation-prettifier)
+  * [GHC syntax highlighter](#ghc-syntax-highlighter)
   * [Skylighting](#skylighting)
   * [Table of contents](#table-of-contents)
 * [Contribution](#contribution)
@@ -283,6 +284,36 @@ Something---we don't know what, happened...
 <p>Something—we don’t know what, happened…</p>
 ```
 
+### GHC syntax highlighter
+
+* Option: `--ext-ghc-highlighter`
+
+Use the [GHC syntax
+highlighter](https://hackage.haskell.org/package/ghc-syntax-highlighter)
+package to highlight code blocks with `"haskell"` info string using lexer of
+GHC itself.
+
+The resulting HTML will be rendered as described
+[here](https://hackage.haskell.org/package/mmark-ext/docs/Text-MMark-Extension-GhcSyntaxHighlighter.html#v:ghcSyntaxHighlighter).
+
+Example:
+
+````
+[mark@arch ~]$ mmark --ext-skylighting
+Some Haskell:
+
+```haskell
+main :: IO ()
+main = return ()
+```
+----------------------- Control-D
+<p>Some Haskell:</p>
+<div class="source-code"><pre><code class="language-haskell">
+<span class="va">main</span><span> </span><span class="sy">::</span><span> </span><span class="cr">IO</span><span> </span><span class="sy">(</span><span class="sy">)</span><span>
+</span><span class="va">main</span><span> </span><span class="sy">=</span><span> </span><span class="va">return</span><span> </span><span class="sy">(</span><span class="sy">)</span><span>
+</span></code></pre></div>
+````
+
 ### Skylighting
 
 * Option: `--ext-skylighting`
@@ -292,7 +323,7 @@ package to render code blocks with info strings that result in a successful
 lookup from the syntax table that comes with the library.
 
 The resulting HTML will be rendered as described
-[here](https://hackage.haskell.org/package/mmark-ext-0.2.0.0/docs/Text-MMark-Extension-Skylighting.html#v:skylighting).
+[here](https://hackage.haskell.org/package/mmark-ext/docs/Text-MMark-Extension-Skylighting.html#v:skylighting).
 
 Example:
 
@@ -367,7 +398,7 @@ Baz.
 Issues, bugs, and questions may be reported in [the GitHub issue tracker for
 this project](https://github.com/mmark-md/mmark-cli/issues).
 
-Pull requests are also welcome and will be reviewed quickly.
+Pull requests are also welcome.
 
 ## License
 

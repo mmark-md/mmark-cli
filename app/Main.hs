@@ -61,6 +61,9 @@ main = do
             , f optExtMathJax               (Ext.mathJax (Just '$'))
             , g optExtObfuscateEmail        Ext.obfuscateEmail
             , f optExtPunctuationPrettifier Ext.punctuationPrettifier
+#if __GLASGOW_HASKELL__ >= 804
+            , f optExtGhcSyntaxHighlighter  Ext.ghcSyntaxHighlighter
+#endif
             , f optExtSkylighting           Ext.skylighting
             , g optExtToc $ \(from,to) ->
                Ext.toc "toc" . MMark.runScanner doc . Ext.tocScanner $ \x ->
@@ -119,6 +122,10 @@ data Opts = Opts
     -- ^ Enable extension: 'Ext.obfuscateEmail'
   , optExtPunctuationPrettifier :: !Bool
     -- ^ Enable extension: 'Ext.punctuationPrettifier'
+#if __GLASGOW_HASKELL__ >= 804
+  , optExtGhcSyntaxHighlighter :: !Bool
+    -- ^ Enable extension: 'Ext.ghcSyntaxHighlighter'
+#endif
   , optExtSkylighting :: !Bool
     -- ^ Enable extension: 'Ext.skylighting'
   , optExtToc :: !(Maybe (Int, Int))
@@ -208,6 +215,12 @@ optsParser = Opts
     [ long    "ext-punctuation"
     , help    "Enable punctuation prettifier"
     ]
+#if __GLASGOW_HASKELL__ >= 804
+  <*> (switch . mconcat)
+    [ long    "ext-ghc-highlighter"
+    , help    "Enable GHC syntax highlighter for Haskell code"
+    ]
+#endif
   <*> (switch . mconcat)
     [ long    "ext-skylighting"
     , help    "Enable syntax highlighting of code snippets with Skylighting"
