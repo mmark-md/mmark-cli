@@ -1,3 +1,7 @@
+## Unreleased
+
+* Dropped support for GHC 8.0.
+
 ## MMark CLI 0.0.5.0
 
 * Added support for the `ghcSyntaxHighlighter` extension. Only available
