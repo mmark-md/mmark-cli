@@ -4,7 +4,7 @@
 [![Hackage](https://img.shields.io/hackage/v/mmark-cli.svg?style=flat)](https://hackage.haskell.org/package/mmark-cli)
 [![Stackage Nightly](http://stackage.org/package/mmark-cli/badge/nightly)](http://stackage.org/nightly/package/mmark-cli)
 [![Stackage LTS](http://stackage.org/package/mmark-cli/badge/lts)](http://stackage.org/lts/package/mmark-cli)
-[![Build Status](https://travis-ci.org/mmark-md/mmark-cli.svg?branch=master)](https://travis-ci.org/mmark-md/mmark-cli)
+![CI](https://github.com/mmark-md/mmark-cli/workflows/CI/badge.svg?branch=master)
 
 * [Templates](#templates)
 * [Extensions](#extensions)
