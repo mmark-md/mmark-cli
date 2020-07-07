@@ -8,7 +8,7 @@ module Main (main) where
 
 import Control.Applicative
 import Control.Monad
-import Data.Aeson ((.=), Value (..))
+import Data.Aeson (Value (..), (.=))
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.HashMap.Strict as HM
