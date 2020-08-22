@@ -278,7 +278,7 @@ For example (not sure if this is the correct punctuation to use here, but it
 demonstrates the effect):
 
 ```
-[mark@arch ~]$ mmark --ext-punctuation
+$ mmark --ext-punctuation
 Something---we don't know what, happened...
 ----------------------- Control-D
 <p>Something—we don’t know what, happened…</p>
@@ -299,7 +299,7 @@ The resulting HTML will be rendered as described
 Example:
 
 ````
-[mark@arch ~]$ mmark --ext-skylighting
+$ mmark --ext-ghc-highlighter
 Some Haskell:
 
 ```haskell
@@ -328,7 +328,7 @@ The resulting HTML will be rendered as described
 Example:
 
 ````
-[mark@arch ~]$ mmark --ext-skylighting
+$ mmark --ext-skylighting
 Some Haskell:
 
 ```haskell
@@ -353,7 +353,7 @@ assembled from headings with levels from `N` to `M`, where `N-M` is `RANGE`.
 For example:
 
 ````
-[mark@arch ~]$ mmark --ext-toc 2-4
+$ mmark --ext-toc 2-4
 # Story of my life
 
 ```toc
