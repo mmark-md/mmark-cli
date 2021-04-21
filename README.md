@@ -106,7 +106,7 @@ Third.
 
 * Option: `--ext-font-awesome`
 
-This allows to turn autolinks with `fa` scheme into font awesome icons:
+This allows us to turn autolinks with `fa` scheme into font awesome icons:
 
 ```
 $ mmark --ext-font-awesome
@@ -200,7 +200,7 @@ opens in new tab.</p>
 
 * Option: `--ext-mathjax`
 
-The extension allows to transform inline code spans into MathJax inline
+The extension allows us to transform inline code spans into MathJax inline
 spans and code blocks with the info string `"mathjax"` (case-sensitive) into
 MathJax display spans. Every line in such a code block will produce a
 separate display span, i.e. a separate line with a formula (which is
