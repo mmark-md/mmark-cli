@@ -10,8 +10,8 @@ import Control.Applicative
 import Control.Monad
 import Data.Aeson (Value (..), (.=))
 import qualified Data.Aeson as Aeson
+import qualified Data.Aeson.KeyMap as Aeson.KeyMap
 import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.HashMap.Strict as HM
 import Data.List (intercalate)
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -75,7 +75,7 @@ main = do
               case MMark.projectYaml doc of
                 Just (Object m) ->
                   Object $
-                    HM.insert "output" (String output) m
+                    Aeson.KeyMap.insert "output" (String output) m
                 _ ->
                   Aeson.object
                     [ "output" .= output
