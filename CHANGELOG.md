@@ -1,6 +1,7 @@
-## Unreleased
+## MMark CLI 0.0.5.1
 
 * Dropped support for GHC 8.6 and older.
+* Works with aeson 2.
 
 ## MMark CLI 0.0.5.0
 
