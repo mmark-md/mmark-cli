@@ -1,11 +1,11 @@
-cabal-version:   1.18
+cabal-version:   2.4
 name:            mmark-cli
 version:         0.0.5.1
-license:         BSD3
+license:         BSD-3-Clause
 license-file:    LICENSE.md
 maintainer:      Mark Karpov <markkarpov92@gmail.com>
 author:          Mark Karpov <markkarpov92@gmail.com>
-tested-with:     ghc ==8.8.4 ghc ==8.10.5 ghc ==9.0.1
+tested-with:     ghc ==8.10.7 ghc ==9.0.1 ghc ==9.2.1
 homepage:        https://github.com/mmark-md/mmark-cli
 bug-reports:     https://github.com/mmark-md/mmark-cli/issues
 synopsis:        Command line interface to the MMark markdown processor
