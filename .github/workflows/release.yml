@@ -1,0 +1,62 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+  build:
+    needs: release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            targetOs: Linux
+          - os: macOS-latest
+            targetOs: macOS
+          - os: ubuntu-latest
+            targetOs: Windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: haskell/actions/setup@v1.2.9
+        id: setup-haskell-cabal
+        with:
+          ghc-version: "9.2.1"
+          cabal-version: "3.6"
+      - run: cabal update
+      - run: cabal freeze
+      - uses: actions/cache@v2.1.3
+        with:
+          path: |
+            ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+      - run: cabal build
+      - run: cabal install --install-method=copy --installdir=result mmark
+      - run: |
+          cd result
+          7z a -l ${{ github.workspace }}/mmark-cli.zip .
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: mmark-cli.zip
+          asset_name: mmark-cli-${{ matrix.targetOs }}.zip
+          asset_content_type: application/zip
