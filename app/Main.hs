@@ -9,30 +9,30 @@ module Main (main) where
 import Control.Applicative
 import Control.Monad
 import Data.Aeson (Value (..), (.=))
-import qualified Data.Aeson as Aeson
-import qualified Data.Aeson.KeyMap as Aeson.KeyMap
-import qualified Data.ByteString.Lazy.Char8 as BL
+import Data.Aeson qualified as Aeson
+import Data.Aeson.KeyMap qualified as Aeson.KeyMap
+import Data.ByteString.Lazy.Char8 qualified as BL
 import Data.List (intercalate)
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import qualified Data.Text.Lazy as TL
+import Data.Text qualified as T
+import Data.Text.IO qualified as T
+import Data.Text.Lazy qualified as TL
 import Data.Version (showVersion)
 import Data.Void
 import Development.GitRev
-import qualified Lucid as L
+import Lucid qualified as L
 import Options.Applicative hiding (ParseError)
 import Paths_mmark_cli (version)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
 import Text.MMark (MMarkErr)
-import qualified Text.MMark as MMark
-import qualified Text.MMark.Extension.Common as Ext
+import Text.MMark qualified as MMark
+import Text.MMark.Extension.Common qualified as Ext
 import Text.Megaparsec (ParseErrorBundle (..), Parsec, SourcePos (..))
-import qualified Text.Megaparsec as M
-import qualified Text.Megaparsec.Char as MC
-import qualified Text.Megaparsec.Char.Lexer as MCL
-import qualified Text.Mustache as U
+import Text.Megaparsec qualified as M
+import Text.Megaparsec.Char qualified as MC
+import Text.Megaparsec.Char.Lexer qualified as MCL
+import Text.Mustache qualified as U
 
 -- | Entry point of the program.
 main :: IO ()
