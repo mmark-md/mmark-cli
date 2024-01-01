@@ -1,3 +1,7 @@
+## MMark CLI 0.0.5.2
+
+* Maintenance release with more minimal dependencies.
+
 ## MMark CLI 0.0.5.1
 
 * Dropped support for GHC 8.6 and older.
