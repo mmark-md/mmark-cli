@@ -1,6 +1,6 @@
 cabal-version:   2.4
 name:            mmark-cli
-version:         0.0.5.1
+version:         0.0.5.2
 license:         BSD-3-Clause
 license-file:    LICENSE.md
 maintainer:      Mark Karpov <markkarpov92@gmail.com>
@@ -29,6 +29,7 @@ executable mmark
     main-is:          Main.hs
     hs-source-dirs:   app
     other-modules:    Paths_mmark_cli
+    autogen-modules:  Paths_mmark_cli
     default-language: GHC2021
     build-depends:
         aeson >=0.11 && <3,
