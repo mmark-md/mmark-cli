@@ -67,16 +67,16 @@ By using the `--template` argument, it's possible to create a standalone
 HTML page. The templating system we use is
 [Mustache](https://mustache.github.io/mustache.5.html), as implemented by
 the [stache](https://hackage.haskell.org/package/stache) library. The
-library conforms to the version 1.1.3 of the official [Mustache
+library conforms to version 1.1.3 of the official [Mustache
 specification](https://github.com/mustache/spec), but does not implement
-lambdas (which is an optional feature is the specification) for simplify and
-other technical reasons we won't touch here.
+lambdas (which is an optional feature of the specification) for simplicity
+and other technical reasons we won't touch here.
 
-If markdown source file has a YAML section, its contents will be provided as
-context for rendering of the template. In addition to that, a new top-level
-value bound to the variable named `output` will be available. That variable
-contains the HTML rendition of markdown document. It's best to interpolate
-it without HTML escaping, like so: `{{& output }}`.
+If the markdown source file has a YAML section, its contents will be provided
+as context for rendering of the template. In addition to that, a new
+top-level value bound to the variable named `output` will be available. That
+variable contains the HTML rendition of the markdown document. It's best to
+interpolate it without HTML escaping, like so: `{{& output }}`.
 
 ## Extensions
 
@@ -120,8 +120,9 @@ A more interesting example: <fa:quote-left/3x/pull-left/border>.
 </p>
 ```
 
-In general, all path components in URIs that go after the name of icon will
-be prefixed with `"fa-"` and added as classes, so you can do a lot of fancy
+In general, all path components in URIs that go after the name of the icon
+will be prefixed with `"fa-"` and added as classes, so you can do a lot of
+fancy
 stuff, see http://fontawesome.io/examples/.
 
 ### Footnotes
@@ -183,9 +184,9 @@ To enable that mode press [Ctrl+A](kbd:).
 
 * Option: `--ext-link-target`
 
-When title of a link starts with the word `"_blank"`, `"_self"`,
-`"_parent"`, or `"_top"`, it's stripped from title (as well as all
-whitespace after it) and added as the value of `target` attribute of the
+When the title of a link starts with the word `"_blank"`, `"_self"`,
+`"_parent"`, or `"_top"`, it's stripped from the title (as well as all
+whitespace after it) and added as the value of the `target` attribute of the
 resulting link. For example:
 
 ```
@@ -228,7 +229,7 @@ A \xrightarrow{f} B
 
 ### Email obfuscation
 
-* Option: `--obfuscate-email CLASS`
+* Option: `--ext-obfuscate-email CLASS`
 
 This extension makes email addresses in autolinks be rendered as something
 like this:
@@ -347,7 +348,7 @@ main = return ()
 
 * Option: `--ext-toc RANGE`
 
-Replace the code block with info string `"toc"` by table of contents
+Replace the code block with info string `"toc"` by a table of contents
 assembled from headings with levels from `N` to `M`, where `N-M` is `RANGE`.
 
 For example:
@@ -404,4 +405,4 @@ Pull requests are also welcome.
 
 Copyright © 2018–present Mark Karpov
 
-Distributed under BSD 3 clause license.
+Distributed under the BSD 3-clause license.
