@@ -9,12 +9,15 @@
 * [Templates](#templates)
 * [Extensions](#extensions)
   * [Comment paragraph](#comment-paragraph)
-  * [Font Awesome](#font-awesome)
+  * [Emoji](#emoji)
   * [Footnotes](#footnotes)
   * [Kbd tags](#kbd-tags)
+  * [Lazy images](#lazy-images)
+  * [Line highlighting](#line-highlighting)
   * [Link targets](#link-targets)
   * [MathJax](#mathjax)
-  * [Email obfuscation](#email-obfuscation)
+  * [Mermaid](#mermaid)
+  * [Permalinks](#permalinks)
   * [Punctuation prettifier](#punctuation-prettifier)
   * [GHC syntax highlighter](#ghc-syntax-highlighter)
   * [Skylighting](#skylighting)
@@ -26,14 +29,16 @@ This is a command line application serving as an interface to the MMark
 markdown processor.
 
 ```
-mmark—command line interface to MMark markdown processor
+mmark—command line interface to the MMark markdown processor
 
 Usage: mmark [-v|--version] [-i|--ifile IFILE] [-o|--ofile OFILE] [-j|--json]
-             [-t|--template FILE] [--ext-comment PREFIX] [--ext-font-awesome]
-             [--ext-footnotes] [--ext-kbd] [--ext-link-target] [--ext-mathjax]
-             [--ext-obfuscate-email CLASS] [--ext-punctuation]
-             [--ext-skylighting] [--ext-toc RANGE]
-  Command line interface to MMark markdown processor
+             [-t|--template FILE] [--ext-comment PREFIX] [--ext-emoji]
+             [--ext-footnotes] [--ext-kbd] [--ext-lazy-images]
+             [--ext-line-highlight] [--ext-link-target] [--ext-mathjax]
+             [--ext-mermaid] [--ext-permalinks] [--ext-punctuation]
+             [--ext-ghc-highlighter] [--ext-skylighting] [--ext-toc RANGE]
+
+  Command line interface to the MMark markdown processor
 
 Available options:
   -h,--help                Show this help text
@@ -45,21 +50,29 @@ Available options:
   -j,--json                Output parse errors and result in JSON format
   -t,--template FILE       Use the template located at this path
   --ext-comment PREFIX     Remove paragraphs that start with the given prefix
-  --ext-font-awesome       Enable support for inserting font awesome icons
+  --ext-emoji              Replace :shortcode: with the emoji it names
   --ext-footnotes          Enable support for footnotes
   --ext-kbd                Enable support for wrapping things in kbd tags
+  --ext-lazy-images        Let the browser decide when to fetch each image
+  --ext-line-highlight     Point at the lines of a code block named by its info
+                           string, e.g. "haskell {2,4-6}"
   --ext-link-target        Enable support for specifying link targets
   --ext-mathjax            Enable support for MathJax formulas
-  --ext-obfuscate-email CLASS
-                           Obfuscate email addresses assigning the specified
-                           class
+  --ext-mermaid            Render mermaid code blocks as diagrams in the browser
+  --ext-permalinks         Append a link to its own id to every heading
   --ext-punctuation        Enable punctuation prettifier
+  --ext-ghc-highlighter    Enable GHC syntax highlighter for Haskell code
   --ext-skylighting        Enable syntax highlighting of code snippets with
                            Skylighting
   --ext-toc RANGE          Enable generation of table of contents using the
                            supplied range of headers to include, e.g. "1-6" or
                            "2-4"
 ```
+
+An extension may find something in the document that it cannot make sense
+of, such as a footnote reference that leads nowhere. When that happens it is
+reported the same way a parse error is, against the source of the document,
+and nothing is written to the output.
 
 ## Templates
 
@@ -72,11 +85,11 @@ specification](https://github.com/mustache/spec), but does not implement
 lambdas (which is an optional feature of the specification) for simplicity
 and other technical reasons we won't touch here.
 
-If the markdown source file has a YAML section, its contents will be provided
-as context for rendering of the template. In addition to that, a new
-top-level value bound to the variable named `output` will be available. That
-variable contains the HTML rendition of the markdown document. It's best to
-interpolate it without HTML escaping, like so: `{{& output }}`.
+If the markdown source file has a YAML section, its contents will be
+provided as context for rendering of the template. In addition to that, a
+new top-level value bound to the variable named `output` will be available.
+That variable contains the HTML rendition of the markdown document. It's
+best to interpolate it without HTML escaping, like so: `{{& output }}`.
 
 ## Extensions
 
@@ -102,28 +115,34 @@ Third.
 <p>Third.</p>
 ```
 
-### Font awesome
+### Emoji
 
-* Option: `--ext-font-awesome`
+* Option: `--ext-emoji`
 
-This allows us to turn autolinks with `fa` scheme into font awesome icons:
+Replace every `:shortcode:` with the emoji it names:
 
 ```
-$ mmark --ext-font-awesome
-Here is the user icon: <fa:user>.
-
-A more interesting example: <fa:quote-left/3x/pull-left/border>.
+$ mmark --ext-emoji
+Ship it :rocket: and :tada:.
 ----------------------- Control-D
-<p>Here is the user icon: <span class="fa fa-user"></span>.</p>
-<p>A more interesting example:
-  <span class="fa fa-quote-left fa-3x fa-pull-left fa-border"></span>.
-</p>
+<p>Ship it 🚀 and 🎉.</p>
 ```
 
-In general, all path components in URIs that go after the name of the icon
-will be prefixed with `"fa-"` and added as classes, so you can do a lot of
-fancy
-stuff, see http://fontawesome.io/examples/.
+A shortcode is a run of letters, digits, `_`, `+`, and `-` between colons. A
+name that is not one of the recognized ones is reported as an error rather
+than left alone, on the grounds that it is far more likely to be a typo than
+something you meant to keep:
+
+```
+$ mmark --ext-emoji
+Ship it :nosuchthing:.
+----------------------- Control-D
+<stdin>:1:1:
+  |
+1 | Ship it :nosuchthing:.
+  | ^
+there is no emoji called "nosuchthing"
+```
 
 ### Footnotes
 
@@ -141,8 +160,8 @@ $ mmark --ext-footnotes
 Here goes some text [1](footnote:1).
 
 > footnotes
-
-  1. Here we have the footnote.
+>
+> 1. Here we have the footnote.
 ----------------------- Control-D
 <p>Here goes some text <a href="#fn1" id="fnref1"><sup>1</sup></a>.</p>
 <ol>
@@ -152,10 +171,20 @@ Here we have the footnote.
 </ol>
 ```
 
-The extension is not fully safe though in the sense that we can't check that
-a footnote reference refers to an existing footnote and that footnotes have
-corresponding references, or that they are present in the document in the
-right order.
+The footnotes of a document are also checked, so a reference that leads
+nowhere, a footnote that nothing refers to, a footnote that is defined
+twice, and more than one footnote section are all reported as errors:
+
+```
+$ mmark --ext-footnotes
+Here goes some text [1](footnote:1).
+----------------------- Control-D
+<stdin>:1:21:
+  |
+1 | Here goes some text [1](footnote:1).
+  |                     ^
+there is no footnote 1
+```
 
 ### Kbd tags
 
@@ -180,6 +209,64 @@ author, but you can of course do something like this instead:
 To enable that mode press [Ctrl+A](kbd:).
 ```
 
+### Lazy images
+
+* Option: `--ext-lazy-images`
+
+Give every image `loading="lazy"` and `decoding="async"`, so that an image
+far down the page does not hold up the ones the reader can already see:
+
+```
+$ mmark --ext-lazy-images
+![a cat](cat.png)
+----------------------- Control-D
+<p><img loading="lazy" decoding="async" alt="a cat" src="cat.png"></p>
+```
+
+### Line highlighting
+
+* Option: `--ext-line-highlight`
+
+Point at the lines of a code block that the prose is about by naming them
+after the language in the info string. The lines are given the class
+`"highlighted-line"`, and the language, if there is one, still becomes the
+`language-` class of the `<code>` element:
+
+````
+$ mmark --ext-line-highlight
+```elixir {2}
+alpha
+beta
+gamma
+```
+----------------------- Control-D
+<pre><code class="language-elixir">alpha
+<span class="highlighted-line">beta
+</span>gamma
+</code></pre>
+````
+
+The specification is a comma-separated list of line numbers and ranges, so
+`{2,4-6}` points at lines 2, 4, 5, and 6.
+
+Both syntax highlighters read the same specification and point at the lines
+themselves, around the tokens they have coloured. This extension is what
+renders the blocks they do not take, so combining it with one of them
+highlights the languages that highlighter knows and still points at the
+lines in every other block:
+
+````
+$ mmark --ext-skylighting --ext-line-highlight
+```haskell {2}
+main :: IO ()
+main = return ()
+```
+----------------------- Control-D
+<div class="source-code"><pre><code class="language-haskell"><span class="ot">main ::</span><span> </span><span class="dt">IO</span><span> ()</span>
+<span class="highlighted-line"><span>main </span><span class="ot">=</span><span> </span><span class="fu">return</span><span> ()</span>
+</span></code></pre></div>
+````
+
 ### Link targets
 
 * Option: `--ext-link-target`
@@ -190,10 +277,10 @@ whitespace after it) and added as the value of the `target` attribute of the
 resulting link. For example:
 
 ```
-$ mmark --ext-kbd
+$ mmark --ext-link-target
 This [link](/url '_blank My title') opens in new tab.
 ----------------------- Control-D
-<p>This <a href="/url" title="My title" target="_blank">link</a>
+<p>This <a target="_blank" rel="noopener noreferrer" href="/url" title="My title">link</a>
 opens in new tab.</p>
 ```
 
@@ -227,38 +314,52 @@ A \xrightarrow{f} B
 </p>
 ````
 
-### Email obfuscation
+### Mermaid
 
-* Option: `--ext-obfuscate-email CLASS`
+* Option: `--ext-mermaid`
 
-This extension makes email addresses in autolinks be rendered as something
-like this:
+Render a `mermaid` code block as `<pre class="mermaid">`, which is what the
+[mermaid](https://mermaid.js.org/) script in the page looks for when it
+turns the diagram into an SVG in the browser:
 
+````
+$ mmark --ext-mermaid
+A diagram:
+
+```mermaid
+graph TD;
+  A-->B;
 ```
-[mark@arch ~]$ mmark --ext-obfuscate-email protected-email
-Send all your spam to <someone@example.org>, if you can!
 ----------------------- Control-D
-<p>Send all your spam to
-  <a href="javascript:void(0)"
-     class="protected-email"
-     data-email="someone@example.org">
-  Enable JavaScript to see this email</a>, if you can!
-</p>
+<p>A diagram:</p>
+<pre class="mermaid">graph TD;
+  A--&gt;B;
+</pre>
+````
+
+You will need to include the mermaid script for anything to happen; this
+extension only marks the block for it. Rendering diagrams ahead of time
+instead requires the mermaid command line tool, which this program does not
+call — use the `mermaidScanner` and `mermaidSvg` functions of `mmark-ext`
+for that.
+
+### Permalinks
+
+* Option: `--ext-permalinks`
+
+Append to every heading a link to the id MMark gives that heading. The link
+is labelled `"#"` and given the class `"permalink"`, so that a style sheet
+can show it only when the heading is hovered:
+
+```
+$ mmark --ext-permalinks
+# Story of my life
+----------------------- Control-D
+<h1 id="story-of-my-life">Story of my life<a href="#story-of-my-life" class="permalink" aria-hidden="true" tabindex="-1">#</a></h1>
 ```
 
-You'll also need to include jQuery and this bit of JS code for the magic to
-work:
-
-```java-script
-$(document).ready(function () {
-    $(".protected-email").each(function () {
-        var item = $(this);
-        var email = item.data('email');
-        item.attr('href', 'mailto:' + email);
-        item.html(email);
-    });
-});
-```
+The link says nothing a screen reader can use, so it is hidden from one and
+taken out of the order the keyboard walks.
 
 ### Punctuation prettifier
 
@@ -309,8 +410,7 @@ main = return ()
 ```
 ----------------------- Control-D
 <p>Some Haskell:</p>
-<div class="source-code"><pre><code class="language-haskell">
-<span class="va">main</span><span> </span><span class="sy">::</span><span> </span><span class="cr">IO</span><span> </span><span class="sy">(</span><span class="sy">)</span><span>
+<div class="source-code"><pre><code class="language-haskell"><span class="va">main</span><span> </span><span class="sy">::</span><span> </span><span class="cr">IO</span><span> </span><span class="sy">(</span><span class="sy">)</span><span>
 </span><span class="va">main</span><span> </span><span class="sy">=</span><span> </span><span class="va">return</span><span> </span><span class="sy">(</span><span class="sy">)</span><span>
 </span></code></pre></div>
 ````
@@ -338,9 +438,8 @@ main = return ()
 ```
 ----------------------- Control-D
 <p>Some Haskell:</p>
-<div class="source-code"><pre><code class="language-haskell">
-<span class="ot">main ::</span><span> </span><span class="dt">IO</span><span> ()</span>
-<span>main </span><span class="fu">=</span><span> return ()</span>
+<div class="source-code"><pre><code class="language-haskell"><span class="ot">main ::</span><span> </span><span class="dt">IO</span><span> ()</span>
+<span>main </span><span class="ot">=</span><span> </span><span class="fu">return</span><span> ()</span>
 </code></pre></div>
 ````
 
@@ -350,6 +449,12 @@ main = return ()
 
 Replace the code block with info string `"toc"` by a table of contents
 assembled from headings with levels from `N` to `M`, where `N-M` is `RANGE`.
+A document that asks for a table of contents but has no headings to put in
+one is reported as an error at the code block that asks.
+
+The table of contents is inserted before the other extensions run, so
+`--ext-punctuation` prettifies the headings in the table just as it does the
+headings in the document.
 
 For example:
 
@@ -360,7 +465,7 @@ $ mmark --ext-toc 2-4
 ```toc
 ```
 
-## Charpter 1
+## Chapter 1
 
 Foo.
 
@@ -375,7 +480,7 @@ Baz.
 <h1 id="story-of-my-life">Story of my life</h1>
 <ul>
 <li>
-<a href="#charpter-1">Charpter 1</a>
+<a href="#chapter-1">Chapter 1</a>
 </li>
 <li>
 <a href="#chapter-2">Chapter 2</a>
@@ -386,7 +491,7 @@ Baz.
 </ul>
 </li>
 </ul>
-<h2 id="charpter-1">Charpter 1</h2>
+<h2 id="chapter-1">Chapter 1</h2>
 <p>Foo.</p>
 <h2 id="chapter-2">Chapter 2</h2>
 <p>Bar.</p>

@@ -25,7 +25,6 @@ import Options.Applicative hiding (ParseError)
 import Paths_mmark_cli (version)
 import System.Directory (makeAbsolute)
 import System.Exit (exitFailure)
-import Text.MMark (MMarkErr)
 import Text.MMark qualified as MMark
 import Text.MMark.Extension.Common qualified as Ext
 import Text.Megaparsec (ParseErrorBundle (..), Parsec, SourcePos (..))
@@ -44,54 +43,64 @@ main = do
       Just file -> do
         absFile <- makeAbsolute file
         (absFile,) <$> T.readFile absFile
-  case MMark.parse mdFileName mdInput of
-    Left bundle -> do
-      if optJson
-        then (BL.putStrLn . Aeson.encode . parseErrorsJson) bundle
-        else putStr (M.errorBundlePretty bundle)
-      exitFailure
-    Right doc -> do
-      let exts =
-            mconcat
-              [ g optExtComment Ext.commentParagraph,
-                f optExtFontAwesome Ext.fontAwesome,
-                f optExtFootnotes Ext.footnotes,
-                f optExtKbd Ext.kbd,
-                f optExtLinkTarget Ext.linkTarget,
-                f optExtMathJax (Ext.mathJax (Just '$')),
-                g optExtObfuscateEmail Ext.obfuscateEmail,
-                f optExtPunctuationPrettifier Ext.punctuationPrettifier,
-                f optExtGhcSyntaxHighlighter Ext.ghcSyntaxHighlighter,
-                f optExtSkylighting Ext.skylighting,
-                g optExtToc $ \(from, to) ->
-                  Ext.toc "toc" . MMark.runScanner doc . Ext.tocScanner $ \x ->
-                    from <= x && x <= to
-              ]
-          f p x = if p then x else mempty
-          g p x = maybe mempty x p
-          applyTemplate tfile output = do
-            t <- U.compileMustacheFile tfile
-            return . TL.toStrict . U.renderMustache t $
-              case MMark.projectYaml doc of
-                Just (Object m) ->
-                  Object $
-                    Aeson.KeyMap.insert "output" (String output) m
-                _ ->
-                  Aeson.object
-                    [ "output" .= output
-                    ]
-      htmlOutput <-
-        maybe return applyTemplate optTemplate
-          . TL.toStrict
-          . L.renderText
-          . MMark.render
-          . MMark.useExtension exts
-          $ doc
-      if optJson
-        then
-          maybe BL.putStrLn BL.writeFile optOutputFile $
-            Aeson.encode (htmlDocJson htmlOutput)
-        else maybe T.putStr T.writeFile optOutputFile htmlOutput
+  doc0 <- orDie optJson (MMark.parse mdFileName mdInput)
+  let -- The order matters for the extensions that render code blocks: an
+      -- extension is given a block before the ones that follow it and
+      -- passes on what it does not recognize. Mermaid claims its own
+      -- blocks, the highlighters colour the languages they know, and the
+      -- line highlighter renders what is left over.
+      renderExts =
+        mconcat . concat $
+          [ [Ext.commentParagraph prefix | Just prefix <- [optExtComment]],
+            [Ext.footnotes | optExtFootnotes],
+            [Ext.kbd | optExtKbd],
+            [Ext.lazyImages | optExtLazyImages],
+            [Ext.linkTarget | optExtLinkTarget],
+            [Ext.mathJax (Just '$') | optExtMathJax],
+            [Ext.permalinks | optExtPermalinks],
+            [Ext.mermaid | optExtMermaid],
+            [Ext.ghcSyntaxHighlighter | optExtGhcSyntaxHighlighter],
+            [Ext.skylighting | optExtSkylighting],
+            [Ext.lineHighlight | optExtLineHighlight]
+          ]
+      -- The table of contents is inserted before the transformations that
+      -- rewrite text so that they apply to the table as well.
+      trans =
+        foldr (>=>) return . concat $
+          [ [Ext.toc "toc" (tocOf from to) | Just (from, to) <- [optExtToc]],
+            [Ext.emoji | optExtEmoji],
+            [Ext.punctuationPrettifier | optExtPunctuationPrettifier]
+          ]
+      tocOf from to =
+        MMark.runScanner (Ext.tocScanner (\x -> from <= x && x <= to)) doc0
+  when optExtFootnotes
+    $ orDie optJson
+    $ MMark.runCheck
+      (Ext.validateFootnotes (MMark.runScanner Ext.footnoteScanner doc0))
+      doc0
+  doc <- orDie optJson (MMark.runTrans trans doc0)
+  let applyTemplate tfile output = do
+        t <- U.compileMustacheFile tfile
+        return . TL.toStrict . U.renderMustache t $
+          case MMark.projectYaml doc of
+            Just (Object m) ->
+              Object $
+                Aeson.KeyMap.insert "output" (String output) m
+            _ ->
+              Aeson.object
+                [ "output" .= output
+                ]
+  htmlOutput <-
+    maybe return applyTemplate optTemplate
+      . TL.toStrict
+      . L.renderText
+      . MMark.render renderExts
+      $ doc
+  if optJson
+    then
+      maybe BL.putStrLn BL.writeFile optOutputFile $
+        Aeson.encode (htmlDocJson htmlOutput)
+    else maybe T.putStr T.writeFile optOutputFile htmlOutput
 
 ----------------------------------------------------------------------------
 -- Command line options parsing
@@ -108,18 +117,24 @@ data Opts = Opts
     optTemplate :: !(Maybe FilePath),
     -- | Enable extension: 'Ext.commentParagraph'
     optExtComment :: !(Maybe Text),
-    -- | Enable extension: 'Ext.fontAwesome'
-    optExtFontAwesome :: !Bool,
+    -- | Enable extension: 'Ext.emoji'
+    optExtEmoji :: !Bool,
     -- | Enable extension: 'Ext.footnotes'
     optExtFootnotes :: !Bool,
     -- | Enable extension: 'Ext.kbd'
     optExtKbd :: !Bool,
+    -- | Enable extension: 'Ext.lazyImages'
+    optExtLazyImages :: !Bool,
+    -- | Enable extension: 'Ext.lineHighlight'
+    optExtLineHighlight :: !Bool,
     -- | Enable extension: 'Ext.linkTarget'
     optExtLinkTarget :: !Bool,
     -- | Enable extension: 'Ext.mathJax'
     optExtMathJax :: !Bool,
-    -- | Enable extension: 'Ext.obfuscateEmail'
-    optExtObfuscateEmail :: !(Maybe Text),
+    -- | Enable extension: 'Ext.mermaid'
+    optExtMermaid :: !Bool,
+    -- | Enable extension: 'Ext.permalinks'
+    optExtPermalinks :: !Bool,
     -- | Enable extension: 'Ext.punctuationPrettifier'
     optExtPunctuationPrettifier :: !Bool,
     -- | Enable extension: 'Ext.ghcSyntaxHighlighter'
@@ -190,8 +205,8 @@ optsParser =
         help "Remove paragraphs that start with the given prefix"
       ]
     <*> (switch . mconcat)
-      [ long "ext-font-awesome",
-        help "Enable support for inserting font awesome icons"
+      [ long "ext-emoji",
+        help "Replace :shortcode: with the emoji it names"
       ]
     <*> (switch . mconcat)
       [ long "ext-footnotes",
@@ -202,6 +217,17 @@ optsParser =
         help "Enable support for wrapping things in kbd tags"
       ]
     <*> (switch . mconcat)
+      [ long "ext-lazy-images",
+        help "Let the browser decide when to fetch each image"
+      ]
+    <*> (switch . mconcat)
+      [ long "ext-line-highlight",
+        help
+          ( "Point at the lines of a code block named by its info string, "
+              ++ "e.g. \"haskell {2,4-6}\""
+          )
+      ]
+    <*> (switch . mconcat)
       [ long "ext-link-target",
         help "Enable support for specifying link targets"
       ]
@@ -209,10 +235,13 @@ optsParser =
       [ long "ext-mathjax",
         help "Enable support for MathJax formulas"
       ]
-    <*> (optional . fmap T.pack . strOption . mconcat)
-      [ long "ext-obfuscate-email",
-        metavar "CLASS",
-        help "Obfuscate email addresses assigning the specified class"
+    <*> (switch . mconcat)
+      [ long "ext-mermaid",
+        help "Render mermaid code blocks as diagrams in the browser"
+      ]
+    <*> (switch . mconcat)
+      [ long "ext-permalinks",
+        help "Append a link to its own id to every heading"
       ]
     <*> (switch . mconcat)
       [ long "ext-punctuation",
@@ -238,16 +267,34 @@ optsParser =
 ----------------------------------------------------------------------------
 -- Helpers
 
--- | Represent the given collection of parse errors as a 'Value'.
-parseErrorsJson :: ParseErrorBundle Text MMarkErr -> Value
-parseErrorsJson ParseErrorBundle {..} =
+-- | Return the result, or print the errors that were produced instead of it
+-- and exit. Both the parser and the extensions report their errors as a
+-- 'ParseErrorBundle', so the two are presented in exactly the same way.
+orDie ::
+  (M.ShowErrorComponent e) =>
+  -- | Whether to print the errors in the JSON format
+  Bool ->
+  -- | The result to return, or the errors to print
+  Either (ParseErrorBundle Text e) a ->
+  IO a
+orDie json result =
+  case result of
+    Left bundle -> do
+      if json
+        then (BL.putStrLn . Aeson.encode . errorsJson) bundle
+        else putStr (M.errorBundlePretty bundle)
+      exitFailure
+    Right x -> return x
+
+-- | Represent the given collection of errors as a 'Value'.
+errorsJson :: (M.ShowErrorComponent e) => ParseErrorBundle Text e -> Value
+errorsJson ParseErrorBundle {..} =
   Aeson.toJSON
-    . fmap parseErrorObj
+    . fmap errorObj
     . fst
     $ M.attachSourcePos M.errorOffset bundleErrors bundlePosState
   where
-    parseErrorObj :: (M.ParseError Text MMarkErr, SourcePos) -> Value
-    parseErrorObj (err, SourcePos {..}) =
+    errorObj (err, SourcePos {..}) =
       Aeson.object
         [ "file" .= sourceName,
           "line" .= M.unPos sourceLine,
