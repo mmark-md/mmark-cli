@@ -36,7 +36,7 @@ import Text.Mustache qualified as U
 -- | Entry point of the program.
 main :: IO ()
 main = do
-  Opts {..} <- execParser optsParserInfo
+  Opts{..} <- execParser optsParserInfo
   (mdFileName, mdInput) <-
     case optInputFile of
       Nothing -> ("<stdin>",) <$> T.getContents
@@ -288,13 +288,13 @@ orDie json result =
 
 -- | Represent the given collection of errors as a 'Value'.
 errorsJson :: (M.ShowErrorComponent e) => ParseErrorBundle Text e -> Value
-errorsJson ParseErrorBundle {..} =
+errorsJson ParseErrorBundle{..} =
   Aeson.toJSON
     . fmap errorObj
     . fst
     $ M.attachSourcePos M.errorOffset bundleErrors bundlePosState
   where
-    errorObj (err, SourcePos {..}) =
+    errorObj (err, SourcePos{..}) =
       Aeson.object
         [ "file" .= sourceName,
           "line" .= M.unPos sourceLine,
